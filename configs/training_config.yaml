@@ -1,0 +1,44 @@
+# Training configuration
+training:
+  # Basic training parameters
+  batch_size: 2
+  gradient_accumulation_steps: 8
+  learning_rate: 1e-4
+  max_epochs: 100
+  validation_interval: 1
+  gradient_clip_val: 1.0
+  early_stopping_patience: 10
+
+  # Memory management
+  memory_config:
+    gpu_memory_fraction: 0.8
+    max_split_size_mb: 256
+    garbage_collection_threshold: 0.8
+    pin_memory: true
+    num_workers: 2
+    prefetch_factor: 2
+
+  # Optimizer settings
+  optimizer:
+    weight_decay: 0.01
+    beta1: 0.9
+    beta2: 0.999
+
+  # Learning rate scheduler
+  scheduler:
+    min_lr: 1e-6
+
+  # Checkpointing
+  checkpoint_dir: "checkpoints"
+
+# Data paths
+data:
+  train_path: "avm/data/processed/train_proofs.json"
+  val_path: "avm/data/processed/val_proofs.json"
+  vocab_path: "avm/data/processed/vocab.json"
+
+# Device settings
+device:
+  cuda_memory_fraction: 0.8
+  num_workers: 2
+  pin_memory: true

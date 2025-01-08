@@ -1,0 +1,30 @@
+def collate_proofs(batch):
+    """Custom collate function to handle variable length sequences"""
+    # Find max lengths
+    max_theorem_len = max(len(item['theorem']) for item in batch)
+    max_steps_len = max(len(item['steps']) for item in batch)
+    
+    # Pad sequences to max length
+    def pad_sequence(sequence, max_len):
+        if isinstance(sequence, torch.Tensor):
+            padding_size = max_len - sequence.size(0)
+            if padding_size > 0:
+                return torch.cat([sequence, torch.zeros(padding_size, dtype=sequence.dtype)])
+            return sequence
+        return sequence
+    
+    # Process each item in batch
+    processed_batch = {
+        'theorem': torch.stack([pad_sequence(item['theorem'], max_theorem_len) for item in batch]),
+        'steps': torch.stack([pad_sequence(item['steps'], max_steps_len) for item in batch]),
+        'hypothesis': torch.stack([pad_sequence(item.get('hypothesis', item['theorem']), max_theorem_len) for item in batch]),
+        'proof_steps': torch.stack([pad_sequence(item.get('proof_steps', item['steps']), max_steps_len) for item in batch])
+    }
+    
+    # Handle additional fields
+    if 'edge_index' in batch[0]:
+        processed_batch['edge_index'] = [item['edge_index'] for item in batch]
+    if 'edge_type' in batch[0]:
+        processed_batch['edge_type'] = [item['edge_type'] for item in batch]
+        
+    return processed_batch

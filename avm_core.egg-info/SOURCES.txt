@@ -1,0 +1,6 @@
+setup.py
+avm_core.egg-info/PKG-INFO
+avm_core.egg-info/SOURCES.txt
+avm_core.egg-info/dependency_links.txt
+avm_core.egg-info/requires.txt
+avm_core.egg-info/top_level.txt
