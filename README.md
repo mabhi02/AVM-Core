@@ -146,5 +146,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📧 Contact
 
 For questions and collaboration opportunities:
-- Email: your.email@domain.com
+- Email: mabhi02@berkeley.edu
 - Issues: GitHub Issues Page
