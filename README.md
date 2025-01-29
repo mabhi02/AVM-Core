@@ -133,9 +133,9 @@ If you use AVM-CORE in your research, please cite:
 ```bibtex
 @software{avm_core2024,
   title={AVM-CORE: Adaptive Validation Model with Compositional Reasoning},
-  author={Your Name},
+  author={Abhijith Varma Mudunuri},
   year={2024},
-  url={https://github.com/yourusername/AVM-CORE}
+  url={https://github.com/mabhi02/AVM-CORE}
 }
 ```
 
