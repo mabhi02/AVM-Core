@@ -4,6 +4,7 @@ import torch
 from pathlib import Path
 import logging
 import os
+from tqdm.auto import tqdm
 from typing import Dict, Optional, Tuple, Union
 
 from avm.models.proof_generator import AVMCore
@@ -386,6 +387,8 @@ def main():
                 'train_config': train_config
             }, final_path)
             logger.info(f"Final model and training state saved to {final_path}")
+            torch.save(model.state_dict(), os.path.join(output_dir, 'model_weights.pth'))
+            logger.info(f"Model weights saved to {os.path.join(output_dir, 'model_weights.pth')}")
             
             if torch.cuda.is_available():
                 logger.info(f"Peak GPU memory: {torch.cuda.max_memory_allocated()/1024**2:.1f}MB")

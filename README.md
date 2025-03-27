@@ -45,6 +45,10 @@ source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+manually run:
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
 ```
 
 ## 📊 Usage

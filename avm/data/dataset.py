@@ -31,14 +31,15 @@ class ProofDataset(Dataset):
         
     def __len__(self) -> int:
         return len(self.proofs)
-        
+    
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+        """Get a single item from the dataset with proper target tokens"""
         proof = self.proofs[idx]
         
         # Convert symbols to indices
         symbols = proof.get('symbols', [])
         symbol_indices = [self.symbol2idx.get(s, self.symbol2idx['<UNK>']) 
-                         for s in symbols]
+                        for s in symbols]
         symbol_tensor = torch.tensor(symbol_indices, dtype=torch.long)
         
         # Convert proof steps
@@ -53,6 +54,17 @@ class ProofDataset(Dataset):
         else:
             # Create dummy tensor if no steps
             steps_tensor = torch.zeros((1, self.max_len), dtype=torch.long)
+        
+        # Create target tokens for training (next token prediction)
+        # Important: We need to flatten the steps tensor to create a single target sequence
+        # that matches the generation_logits shape in the model
+        if steps_tensor.numel() > 0:
+            # Simply reshape the steps tensor to create targets
+            # This ensures dimensions match when computing the loss
+            target_tokens = steps_tensor.reshape(-1)
+        else:
+            # Create dummy target if no steps
+            target_tokens = torch.zeros(1, dtype=torch.long)
         
         # Create edge information
         relations = proof.get('relations', [])
@@ -76,8 +88,76 @@ class ProofDataset(Dataset):
             'steps': steps_tensor,
             'theorem': self.encode_step(proof['theorem']),
             'strategy_labels': torch.tensor(proof.get('strategy_labels', [0])),
-            'difficulty': torch.tensor(proof.get('difficulty', 0.5), dtype=torch.float)
+            'difficulty': torch.tensor(proof.get('difficulty', 0.5), dtype=torch.float),
+            'target_tokens': target_tokens
         }
+    
+    
+    """
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+        #Get a single item from the dataset with proper target tokens
+        proof = self.proofs[idx]
+        
+        # Convert symbols to indices
+        symbols = proof.get('symbols', [])
+        symbol_indices = [self.symbol2idx.get(s, self.symbol2idx['<UNK>']) 
+                        for s in symbols]
+        symbol_tensor = torch.tensor(symbol_indices, dtype=torch.long)
+        
+        # Convert proof steps
+        steps = proof.get('steps', [])
+        step_tensors = []
+        for step in steps:
+            step_tensor = self.encode_step(step)
+            step_tensors.append(step_tensor)
+            
+        if step_tensors:
+            steps_tensor = torch.stack(step_tensors)
+        else:
+            # Create dummy tensor if no steps
+            steps_tensor = torch.zeros((1, self.max_len), dtype=torch.long)
+        
+        # Create target tokens for training (next token prediction)
+        target_steps = []
+        for step in steps:
+            tokens = self.encode_step(step)
+            # Shift tokens to create targets 
+            # This creates the sequence we want the model to predict
+            target_steps.append(tokens)
+        
+        if target_steps:
+            target_tokens = torch.cat(target_steps)
+        else:
+            # Create dummy target if no steps
+            target_tokens = torch.zeros(1, dtype=torch.long)
+        
+        # Create edge information
+        relations = proof.get('relations', [])
+        if relations:
+            edge_index = []
+            edge_type = []
+            for rel in relations:
+                edge_index.append([rel['from_idx'], rel['to_idx']])
+                edge_type.append(rel.get('type_idx', 0))
+            edge_index = torch.tensor(edge_index, dtype=torch.long).t()
+            edge_type = torch.tensor(edge_type, dtype=torch.long)
+        else:
+            # Create dummy tensors if no relations
+            edge_index = torch.zeros((2, 1), dtype=torch.long)
+            edge_type = torch.zeros(1, dtype=torch.long)
+            
+        return {
+            'symbols': symbol_tensor,
+            'edge_index': edge_index,
+            'edge_type': edge_type,
+            'steps': steps_tensor,
+            'theorem': self.encode_step(proof['theorem']),
+            'strategy_labels': torch.tensor(proof.get('strategy_labels', [0])),
+            'difficulty': torch.tensor(proof.get('difficulty', 0.5), dtype=torch.float),
+            'target_tokens': target_tokens  # This is the new field
+        }
+    """
+    
     
     def encode_step(self, text: str) -> torch.Tensor:
         """Encode a proof step into tensor representation"""

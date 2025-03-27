@@ -99,7 +99,7 @@ def collate_proofs(batch: List[Dict]) -> Dict[str, Union[torch.Tensor, List]]:
         for field in ['symbols', 'theorem', 'target_tokens']:
             if field in batch[0]:
                 processed_batch[field] = pad_1d_tensors([item[field] for item in batch]).long()
-        
+                
         # Handle 2D tensors (steps)
         if 'steps' in batch[0]:
             steps = [item['steps'] for item in batch]
@@ -149,14 +149,14 @@ def collate_proofs(batch: List[Dict]) -> Dict[str, Union[torch.Tensor, List]]:
         return processed_batch
     
     except Exception as e:
-        logger.error("Error in collate_proofs:")
-        logger.error(f"Batch size: {len(batch)}")
-        logger.error("Batch contents:")
+        logging.error("Error in collate_proofs:")
+        logging.error(f"Batch size: {len(batch)}")
+        logging.error("Batch contents:")
         for i, item in enumerate(batch):
-            logger.error(f"Item {i}:")
+            logging.error(f"Item {i}:")
             for k, v in item.items():
                 if isinstance(v, torch.Tensor):
-                    logger.error(f"  {k}: shape={v.shape}, dtype={v.dtype}")
+                    logging.error(f"  {k}: shape={v.shape}, dtype={v.dtype}")
                 else:
-                    logger.error(f"  {k}: type={type(v)}")
+                    logging.error(f"  {k}: type={type(v)}")
         raise

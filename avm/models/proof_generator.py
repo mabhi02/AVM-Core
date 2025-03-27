@@ -448,18 +448,70 @@ class AVMCore(nn.Module):
             
             target_tokens = batch['target_tokens']
             
+            # Get generation logits
+            generation_logits = outputs['generation_logits']
+            
+            # Log shapes for debugging
+            logger.info(f"Generation logits shape: {generation_logits.shape}")
+            logger.info(f"Target tokens shape: {target_tokens.shape}")
+            
+            # Ensure target tokens are long type (not float)
+            target_tokens = target_tokens.long()
+            
+            # The issue is that generation_logits.shape[1] != target_tokens.shape[1]
+            # We need to either:
+            # 1. Truncate the generation_logits to match target_tokens length
+            # 2. Or pad the target_tokens to match generation_logits length
+            
+            # Option 1: Truncate generation_logits to match target_tokens length
+            if generation_logits.shape[1] > target_tokens.shape[1]:
+                logger.info(f"Truncating generation_logits from {generation_logits.shape[1]} to {target_tokens.shape[1]}")
+                generation_logits = generation_logits[:, :target_tokens.shape[1], :]
+            
+            # Option 2: Pad target_tokens if needed
+            elif generation_logits.shape[1] < target_tokens.shape[1]:
+                logger.info(f"Truncating target_tokens from {target_tokens.shape[1]} to {generation_logits.shape[1]}")
+                target_tokens = target_tokens[:, :generation_logits.shape[1]]
+            
+            # Reshape appropriately for cross entropy loss
+            batch_size, seq_len, vocab_size = generation_logits.shape
+            
+            # Now the shapes should be compatible
+            generation_logits = generation_logits.reshape(-1, vocab_size)
+            target_tokens = target_tokens.reshape(-1)
+            
+            # Verify shapes before loss calculation
+            logger.info(f"Reshaped generation_logits shape: {generation_logits.shape}")
+            logger.info(f"Reshaped target_tokens shape: {target_tokens.shape}")
+            
             # Calculate generation loss
             generation_loss = nn.CrossEntropyLoss(ignore_index=0)(
-                outputs['generation_logits'].view(-1, self.vocab_size),
-                target_tokens.view(-1)
+                generation_logits,
+                target_tokens
             )
             
             # Strategy selection loss
             strategy_loss = torch.tensor(0.0, device=self.device)
-            if 'strategy_labels' in batch:
+            if 'strategy_labels' in batch and 'strategy_weights' in outputs:
+                strategy_weights = outputs['strategy_weights']
+                strategy_labels = batch['strategy_labels']
+                
+                # Log shapes for debugging
+                logger.info(f"Strategy weights shape: {strategy_weights.shape}")
+                logger.info(f"Strategy labels shape: {strategy_labels.shape}")
+                
+                # Handle multi-dimensional strategy labels
+                if strategy_labels.dim() > 1:
+                    # Take the first strategy label for each batch item
+                    strategy_labels = strategy_labels[:, 0]
+                    logger.info(f"Using first strategy label, new shape: {strategy_labels.shape}")
+                
+                # Ensure strategy labels are long
+                strategy_labels = strategy_labels.long()
+                
                 strategy_loss = nn.CrossEntropyLoss()(
-                    outputs['strategy_weights'],
-                    batch['strategy_labels']
+                    strategy_weights,
+                    strategy_labels
                 )
             
             # Total loss
