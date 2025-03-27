@@ -81,6 +81,39 @@ Implemented in `avm/models/strategies.py`:
 
 ## Training Pipeline
 
+### Training Instructions
+
+To train the AVM-CORE model:
+
+1. Ensure CUDA is available and properly configured
+2. Prepare your datasets in the required JSON format
+3. Run the training with the following command:
+
+```bash
+python main.py --mode train --config configs/model_config.yaml --train-config configs/training_config.yaml --output-dir ./outputs
+```
+
+For CUDA-optimized training with custom batch size:
+
+```bash
+python main.py --mode train --config configs/model_config.yaml --train-config configs/training_config.yaml --batch-size 4 --gradient-accumulation-steps 4 --output-dir ./outputs
+```
+
+The model will automatically use CUDA if available. To force CUDA usage, you can modify `main.py` to explicitly set the device:
+
+```python
+# In main.py
+device = torch.device('cuda')  # Force CUDA
+model = model.to(device)
+```
+
+To ensure model weights are saved as model.pth at the end of training, modify `train.py` or add to `main.py`:
+
+```python
+# Save final model weights to model.pth
+torch.save(model.state_dict(), 'model.pth')
+```
+
 ### Training Configuration
 
 - **Main Training Scripts**:
